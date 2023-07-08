@@ -13,3 +13,4 @@ libimage:
 
 clean:
 	rm -rf build
+	rm -rf *.bmp

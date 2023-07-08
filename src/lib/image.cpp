@@ -28,4 +28,109 @@ void Image::setColor(const Color& color, int x, int y) {
 void Image::exportBmp(const char* path) {
     std::ofstream f;
     f.open(path, std::ios::out | std::ios::binary);
+
+    if (!f.is_open()) {
+        throw std::runtime_error("ERROR: File not found");
+    }
+
+    unsigned char bmpPad[3] = {0, 0, 0};
+    const int paddingSize = ((4 - (width * 3) % 4) % 4);
+    // const int paddingSize = ((4 - (width * 3) & 3) & 3);
+    const int fileHeaderSize = 14;
+    const int infoHeaderSize = 40;
+    const int fileSize = fileHeaderSize + infoHeaderSize + width*height*3 + paddingSize*height;
+
+    unsigned char fileHeader[fileHeaderSize];
+
+    // file type
+    fileHeader[0] = 'B';
+    fileHeader[1] = 'M';
+    // file size
+    fileHeader[2] = fileSize;
+    fileHeader[3] = fileSize >> 8;
+    fileHeader[4] = fileSize >> 16;
+    fileHeader[5] = fileSize >> 24;
+    // reserved 1
+    fileHeader[6] = 0;
+    fileHeader[7] = 0;
+    // reserved 2
+    fileHeader[8] = 0;
+    fileHeader[9] = 0;
+    // pixel data offset
+    fileHeader[10] = fileHeaderSize + infoHeaderSize;
+    fileHeader[11] = 0;
+    fileHeader[12] = 0;
+    fileHeader[13] = 0;
+
+    unsigned char infoHeader[infoHeaderSize];
+    
+    // header size
+    infoHeader[0] = infoHeaderSize;
+    infoHeader[1] = 0;
+    infoHeader[2] = 0;
+    infoHeader[3] = 0;
+    // image width
+    infoHeader[4] = width;
+    infoHeader[5] = width >> 8;
+    infoHeader[6] = width >> 16;
+    infoHeader[7] = width >> 24;
+    // image height
+    infoHeader[8] = height;
+    infoHeader[9] = height >> 8;
+    infoHeader[10] = height >> 16;
+    infoHeader[11] = height >> 24;
+    // planes
+    infoHeader[12] = 1;
+    infoHeader[13] = 0;
+    // bits per pixel (RGB)
+    infoHeader[14] = 24;
+    infoHeader[15] = 0;
+    // compression (no compression)
+    infoHeader[16] = 0;
+    infoHeader[17] = 0;
+    infoHeader[18] = 0;
+    infoHeader[19] = 0;
+    // image size (no compression)
+    infoHeader[20] = 0;
+    infoHeader[21] = 0;
+    infoHeader[22] = 0;
+    infoHeader[23] = 0;
+    // x pixels per meter
+    infoHeader[24] = 0;
+    infoHeader[25] = 0;
+    infoHeader[26] = 0;
+    infoHeader[27] = 0;
+    // y pixels per meter
+    infoHeader[28] = 0;
+    infoHeader[29] = 0;
+    infoHeader[30] = 0;
+    infoHeader[31] = 0;
+    // total colors (color palette not used)
+    infoHeader[32] = 0;
+    infoHeader[33] = 0;
+    infoHeader[34] = 0;
+    infoHeader[35] = 0;
+    // important colors (generally ignored)
+    infoHeader[36] = 0;
+    infoHeader[37] = 0;
+    infoHeader[38] = 0;
+    infoHeader[39] = 0;
+
+    f.write(reinterpret_cast<char*>(fileHeader), fileHeaderSize);
+    f.write(reinterpret_cast<char*>(infoHeader), infoHeaderSize);
+
+    for (int row = 0; row < height; row++) {
+        for (int col = 0; col < width; col++) {
+            unsigned char r = static_cast<unsigned char>(getColor(row, col).r * 255.0f);
+            unsigned char g = static_cast<unsigned char>(getColor(row, col).g * 255.0f);
+            unsigned char b = static_cast<unsigned char>(getColor(row, col).b * 255.0f);
+
+            unsigned char color[] = {b, g, r};
+            f.write(reinterpret_cast<char*>(color), 3);
+        }
+        f.write(reinterpret_cast<char*>(bmpPad), paddingSize);
+    }
+    f.close();
+    
+    std::cout << "Image create at " << path << " successfully" << std::endl;
 }

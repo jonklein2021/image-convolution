@@ -3,7 +3,7 @@
 #include <vector>
 
 struct Color {
-    float r, g, b, padd;
+    float r, g, b;
 
     Color();
     Color(float r, float g, float b);
