@@ -25,12 +25,56 @@ void Image::setColor(const Color& color, int x, int y) {
     colors[x*width+y].b = color.b;
 }
 
+void Image::importBmp(const char* path) {
+    std::ifstream f;
+    f.open(path, std::ios::in | std::ios::binary);
+    
+    if (!f.is_open()) {
+        throw std::runtime_error("READ ERROR: File could not be found");
+    }
+
+    const int fileHeaderSize = 14;
+    const int infoHeaderSize = 40;
+
+    unsigned char fileHeader[fileHeaderSize];
+    f.read(reinterpret_cast<char*>(fileHeader), fileHeaderSize);
+
+    if (fileHeader[0] != 'B' || fileHeader[1] != 'M') {
+        throw std::runtime_error("ERROR: File is not a valid bitmap image");
+    }
+    
+    unsigned char infoHeader[infoHeaderSize];
+    f.read(reinterpret_cast<char*>(infoHeader), infoHeaderSize);
+
+    const int fileSize = fileHeader[2] + (fileHeader[3] << 8) + (fileHeader[4] << 16) + (fileHeader[5] << 24);
+    width = infoHeader[4] + (infoHeader[5] << 8) + (infoHeader[6] << 16) + (infoHeader[7] << 24);
+    height = infoHeader[8] + (infoHeader[9] << 8) + (infoHeader[10] << 16) + (infoHeader[11] << 24);
+
+    colors.resize(width*height);
+
+    const int paddingSize = ((4 - (width * 3) % 4) % 4);
+    for (int row = 0; row < height; row++) {
+        for (int col = 0; col < width; col++) {
+            unsigned char color[3];
+            f.read(reinterpret_cast<char*>(color), 3);
+            colors[row*width+col].r = static_cast<float>(color[2]) / 255.0f;
+            colors[row*width+col].g = static_cast<float>(color[1]) / 255.0f;
+            colors[row*width+col].b = static_cast<float>(color[0]) / 255.0f;
+        }
+        f.ignore(paddingSize);
+    }
+    f.close();
+
+    std::cout << "File \"" << path << "\" read successfully" << std::endl;
+
+}
+
 void Image::exportBmp(const char* path) {
     std::ofstream f;
     f.open(path, std::ios::out | std::ios::binary);
 
     if (!f.is_open()) {
-        throw std::runtime_error("ERROR: File not found");
+        throw std::runtime_error("ERROR: File could not be created");
     }
 
     unsigned char bmpPad[3] = {0, 0, 0};
@@ -132,5 +176,5 @@ void Image::exportBmp(const char* path) {
     }
     f.close();
     
-    std::cout << "Image create at " << path << " successfully" << std::endl;
+    std::cout << "Image created at \"" << path << "\" successfully" << std::endl;
 }

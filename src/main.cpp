@@ -11,4 +11,9 @@ int main() {
         }
     }
     image.exportBmp("image.bmp");
+
+    Image copy(0, 0);
+
+    copy.importBmp("image.bmp");
+    copy.exportBmp("copy.bmp");
 }
