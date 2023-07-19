@@ -3,27 +3,6 @@
 #include <cmath>
 #include "image.hpp"
 
-int main() {
-    // const int width = 640;
-    // const int height = 480;
-
-    // srand(static_cast<unsigned>(time(0)));
-
-    // Image image(width, height);
-    // for (int row = 0; row < height; row++) {
-    //     for (int col = 0; col < width; col++) {
-    //         image.setColor(Color((float) col / (float) width, 1.0f - (float) col / (float) width, (float) row / (float) height), row, col);
-    //         image.setColor(Color((float) rand()/(float) RAND_MAX, (float) rand()/(float) RAND_MAX, (float) rand()/(float) RAND_MAX), row, col);
-    //     }
-    // }
-    // image.exportBmp("image.bmp");
-
-    Image original("samples/sample_640x426.bmp");
-    original.exportBmp("blurred_2.bmp");
-
-}
-
-
 Image convolve(Image& src, const std::vector<float>& kernel) {
     int m = static_cast<int>(sqrt(kernel.size())); // kernel size should be perfect square
 
@@ -50,10 +29,38 @@ Image convolve(Image& src, const std::vector<float>& kernel) {
 
             Color newColor(red, green, blue);
             
-            dest.setColor(newColor, row, col);
+            dest.setColor(newColor, col, row);
         }
     }
 
     return dest;
+
+}
+
+int main() {
+    // const int width = 640;
+    // const int height = 480;
+
+    // srand(static_cast<unsigned>(time(0)));
+
+    // Image image(width, height);
+    // for (int row = 0; row < height; row++) {
+    //     for (int col = 0; col < width; col++) {
+    //         image.setColor(Color((float) col / (float) width, 1.0f - (float) col / (float) width, (float) row / (float) height), row, col);
+    //         image.setColor(Color((float) rand()/(float) RAND_MAX, (float) rand()/(float) RAND_MAX, (float) rand()/(float) RAND_MAX), row, col);
+    //     }
+    // }
+    // image.exportBmp("image.bmp");
+
+    Image original("samples/sample_640x426.bmp");
+
+    std::vector<float> boxBlur = {
+        1.0/9.0, 1.0/9.0, 1.0/9.0, 
+        1.0/9.0, 1.0/9.0, 1.0/9.0, 
+        1.0/9.0, 1.0/9.0, 1.0/9.0
+    };
+    Image blurred = convolve(original, boxBlur);
+
+    blurred.exportBmp("blurred.bmp");
 
 }

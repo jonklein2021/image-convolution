@@ -39,7 +39,6 @@ Color Image::getColor(int x, int y) {
     // y in [426, 640)
 
     if ((x >= 0 && x < width) && (y >= 0 && y < height)) return colors[y*width+x];
-    std::cout << x << ", " << y << " | " << height << std::endl; 
 
     if (x < 0 && y < 0) return colors[0]; // top left corner
     if (x >= width && y < 0) return colors[width-1]; // top right corner
