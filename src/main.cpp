@@ -1,36 +1,77 @@
+/**
+ * @file main.cpp
+ * @author Jon Klein (jonklein2021@gmail.com)
+ * @brief Image Convolutions in C++
+ * @version 0.1
+ * @date 2023-07-19
+ * 
+ */
+
 #include <iostream>
-#include <cstdlib>
-#include <ctime>
 #include <cmath>
 #include "image.hpp"
+#include <chrono>
 
-// definition at end of file for organization
+// definition is at the end of this file
 Image convolve(Image& src, std::vector<float> kernel);
 
+const std::vector<float> boxBlur = {
+    1.0/9.0, 1.0/9.0, 1.0/9.0, 
+    1.0/9.0, 1.0/9.0, 1.0/9.0, 
+    1.0/9.0, 1.0/9.0, 1.0/9.0
+};
+
+const std::vector<float> gaussianBlur3x3 = {
+    1.0/16.0, 2.0/16.0, 1.0/16.0, 
+    2.0/16.0, 4.0/16.0, 2.0/16.0, 
+    1.0/16.0, 2.0/16.0, 1.0/16.0
+};
+
+const std::vector<float> gaussianBlur5x5 = {
+    1.0/256.0,  4.0/256.0,  6.0/256.0,  4.0/256.0, 1.0/256.0, 
+    4.0/256.0, 16.0/256.0, 24.0/256.0, 16.0/256.0, 4.0/256.0, 
+    6.0/256.0, 24.0/256.0, 36.0/256.0, 24.0/256.0, 6.0/256.0,
+    4.0/256.0, 16.0/256.0, 24.0/256.0, 16.0/256.0, 4.0/256.0, 
+    1.0/256.0,  4.0/256.0,  6.0/256.0,  4.0/256.0, 1.0/256.0
+};
+
 int main() {
-    Image original("samples/sample_640x426.bmp");
+    char file[255];
+    puts("Convolutions for Image Processing");
+    puts("========================================");
+    puts("Enter path to bitmap image to convolve (Ex: samples/doggo.bmp)");
+    
+    std::cin >> file;
 
-    const std::vector<float> boxBlur = {
-        1.0/9.0, 1.0/9.0, 1.0/9.0, 
-        1.0/9.0, 1.0/9.0, 1.0/9.0, 
-        1.0/9.0, 1.0/9.0, 1.0/9.0
-    };
+    // create image object from bmp file
+    Image original(file);
 
-    const std::vector<float> gaussianBlur3x3 = {
-        1.0/16.0, 2.0/16.0, 1.0/16.0, 
-        2.0/16.0, 4.0/16.0, 2.0/16.0, 
-        1.0/16.0, 2.0/16.0, 1.0/16.0
-    };
+    puts("\nPlease enter the number of a kernel below:");
+    puts("1. Box Blur");
+    puts("2. Gaussian Blur (3x3)");
+    puts("3. Gaussian Blur (5x5)");
 
-    const std::vector<float> gaussianBlur5x5 = {
-        1.0/256.0, 4.0/256.0,  6.0/256.0,  4.0/256.0,  1.0/256.0, 
-        4.0/256.0, 16.0/256.0, 24.0/256.0, 16.0/256.0, 4.0/256.0, 
-        6.0/256.0, 24.0/256.0, 36.0/256.0, 24.0/256.0, 6.0/256.0,
-        4.0/256.0, 16.0/256.0, 24.0/256.0, 16.0/256.0, 4.0/256.0, 
-        1.0/256.0, 4.0/256.0,  6.0/256.0,  4.0/256.0,  1.0/256.0
-    };
+    char selection[256];
+    std::cin >> selection;
+    std::vector<float> kernel;
+    
+    if (atoi(selection) == 1) {
+        kernel = boxBlur;
+    } else if (atoi(selection) == 2) {
+        kernel = gaussianBlur3x3;
+    } else if (atoi(selection) == 3) {
+        kernel = gaussianBlur5x5;
+    } else {
+        puts("Invalid selection.");
+        return 1;
+    }
 
-    Image blurred = convolve(original, gaussianBlur5x5);
+    auto t1 = std::chrono::high_resolution_clock::now(); // start time
+    Image blurred = convolve(original, kernel);
+    auto t2 = std::chrono::high_resolution_clock::now(); // end time
+    std::chrono::duration<double, std::milli> ms = t2 - t1; // convolution execution time
+    
+    std::cout << "Convolution successful (" << ms.count() << " ms)" << std::endl;
 
     blurred.exportBmp("blurred.bmp");
 
@@ -40,9 +81,14 @@ Image convolve(Image& src, std::vector<float> kernel) {
     const int M = static_cast<int>(sqrt(kernel.size()));
     const int MM = M*M;
 
-    // ensure that kernel is a perfect square
-    if (MM != kernel.size()) {
-        throw std::runtime_error("ERROR: Kernel size must be a perfect square");
+    // ensure that kernel is an odd perfect square
+    if (MM & 1 == 0 || MM != kernel.size()) {
+        throw std::runtime_error("ERROR: Kernel size must be an odd perfect square");
+    }
+
+    // ensure that kernel is not too big
+    if (M > 9) {
+        throw std::runtime_error("ERROR: Kernel may be no bigger than 9x9");
     }
 
     int width = src.getWidth(), height = src.getHeight();

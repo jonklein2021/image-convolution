@@ -212,5 +212,5 @@ void Image::exportBmp(const char* path) {
     }
     f.close();
     
-    std::cout << "Image created at \"" << path << "\" successfully" << std::endl;
+    std::cout << "Image created at \"" << path << "\"" << std::endl;
 }
