@@ -18,6 +18,13 @@ Color Color::operator+(Color color) {
     return Color(r+color.r, g+color.g, b+color.b);
 }
 
+Color Color::operator+=(Color color) {
+    r += color.r;
+    g += color.g;
+    b += color.b;
+    return *this;
+}
+
 Image::Image(int w, int h) : 
     width(w), height(h), colors(std::vector<Color>(w*h)) {}
 
@@ -36,18 +43,6 @@ int Image::getHeight() {
 }
 
 Color Image::getColor(int x, int y) {
-
-    //     0 1 2 3 4 5 6
-    // 0 | 0 0 0 0 0 0 0 | 
-    // 1 | 0 0 0 0 0 0 0 | 
-    // 2 | 0 0 0 0 0 0 0 |
-    // 3 | 0 0 0 0 0 0 0 |
-    // 4 | 0 0 0 0 0 0 0 |
-
-    // y in [426, 640)
-
-    if ((x >= 0 && x < width) && (y >= 0 && y < height)) return colors[y*width+x];
-
     if (x < 0 && y < 0) return colors[0]; // top left corner
     if (x >= width && y < 0) return colors[width-1]; // top right corner
     if (x < 0 && y >= height) return colors[width*(height-1)]; // bottom left corner
@@ -58,6 +53,7 @@ Color Image::getColor(int x, int y) {
     if (y < 0) return colors[y]; // top edge
     if (y >= height) return colors[(width*(height-1))+x]; // bottom edge
 
+    return colors[y*width+x];
 }
 
 void Image::setColor(const Color& color, int x, int y) {

@@ -11,6 +11,7 @@ class Color {
         ~Color();
         Color operator*(float k);
         Color operator+(Color color);
+        Color operator+=(Color color);
 };
 
 class Image {
