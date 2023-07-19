@@ -13,6 +13,10 @@ Color::~Color() {}
 Image::Image(int w, int h) : 
     width(w), height(h), colors(std::vector<Color>(w*h)) {}
 
+Image::Image(const char* path) {
+    importBmp(path);
+}
+
 Image::~Image() {}
 
 int Image::getWidth() {
@@ -32,17 +36,21 @@ Color Image::getColor(int x, int y) {
     // 3 | 0 0 0 0 0 0 0 |
     // 4 | 0 0 0 0 0 0 0 |
 
+    // y in [426, 640)
+
+    if ((x >= 0 && x < width) && (y >= 0 && y < height)) return colors[y*width+x];
+    std::cout << x << ", " << y << " | " << height << std::endl; 
+
     if (x < 0 && y < 0) return colors[0]; // top left corner
     if (x >= width && y < 0) return colors[width-1]; // top right corner
     if (x < 0 && y >= height) return colors[width*(height-1)]; // bottom left corner
     if (x >= width && y >= height) return colors[(width*height)-1]; // bottom right corner
 
     if (x < 0) return colors[width*y]; // left edge
-    if (x >= width) return colors[(width*(y+1))-1]; // right edge
+    if (x >= width) { return colors[(width*(y+1))-1]; }// right edge
     if (y < 0) return colors[y]; // top edge
     if (y >= height) return colors[(width*(height-1))+x]; // bottom edge
-    
-    return colors[x*width+y];
+
 }
 
 void Image::setColor(const Color& color, int x, int y) {
@@ -79,8 +87,8 @@ void Image::importBmp(const char* path) {
     colors.resize(width*height);
 
     const int paddingSize = ((4 - (width * 3) & 3) & 3); // = ((4 - (width * 3) % 4) % 4);
-    for (int row = 0; row < height; row++) {
-        for (int col = 0; col < width; col++) {
+    for (int row = 0; row < height; row++) { // y
+        for (int col = 0; col < width; col++) { // x
             unsigned char color[3];
             f.read(reinterpret_cast<char*>(color), 3);
             colors[row*width+col].r = static_cast<float>(color[2]) / 255.0f;
@@ -188,11 +196,11 @@ void Image::exportBmp(const char* path) {
     f.write(reinterpret_cast<char*>(fileHeader), fileHeaderSize);
     f.write(reinterpret_cast<char*>(infoHeader), infoHeaderSize);
 
-    for (int row = 0; row < height; row++) {
-        for (int col = 0; col < width; col++) {
-            unsigned char r = static_cast<unsigned char>(getColor(row, col).r * 255.0f);
-            unsigned char g = static_cast<unsigned char>(getColor(row, col).g * 255.0f);
-            unsigned char b = static_cast<unsigned char>(getColor(row, col).b * 255.0f);
+    for (int row = 0; row < height; row++) { // y
+        for (int col = 0; col < width; col++) { // x
+            unsigned char r = static_cast<unsigned char>(getColor(col, row).r * 255.0f);
+            unsigned char g = static_cast<unsigned char>(getColor(col, row).g * 255.0f);
+            unsigned char b = static_cast<unsigned char>(getColor(col, row).b * 255.0f);
 
             unsigned char color[] = {b, g, r};
             f.write(reinterpret_cast<char*>(color), 3);

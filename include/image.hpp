@@ -16,6 +16,7 @@ class Image {
         std::vector<Color> colors;
     public:
         Image(int w, int h);
+        Image(const char* path);
         ~Image();
         int getWidth();
         int getHeight();
