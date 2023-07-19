@@ -15,9 +15,10 @@ class Image {
         int width, height;
         std::vector<Color> colors;
     public:
-        Image();
         Image(int w, int h);
         ~Image();
+        int getWidth();
+        int getHeight();
         Color getColor(int x, int y);
         void setColor(const Color& c, int x, int y);
         void importBmp(const char* path);

@@ -15,7 +15,33 @@ Image::Image(int w, int h) :
 
 Image::~Image() {}
 
+int Image::getWidth() {
+    return width;
+}
+
+int Image::getHeight() {
+    return height;
+}
+
 Color Image::getColor(int x, int y) {
+
+    //     0 1 2 3 4 5 6
+    // 0 | 0 0 0 0 0 0 0 | 
+    // 1 | 0 0 0 0 0 0 0 | 
+    // 2 | 0 0 0 0 0 0 0 |
+    // 3 | 0 0 0 0 0 0 0 |
+    // 4 | 0 0 0 0 0 0 0 |
+
+    if (x < 0 && y < 0) return colors[0]; // top left corner
+    if (x >= width && y < 0) return colors[width-1]; // top right corner
+    if (x < 0 && y >= height) return colors[width*(height-1)]; // bottom left corner
+    if (x >= width && y >= height) return colors[(width*height)-1]; // bottom right corner
+
+    if (x < 0) return colors[width*y]; // left edge
+    if (x >= width) return colors[(width*(y+1))-1]; // right edge
+    if (y < 0) return colors[y]; // top edge
+    if (y >= height) return colors[(width*(height-1))+x]; // bottom edge
+    
     return colors[x*width+y];
 }
 
@@ -30,7 +56,7 @@ void Image::importBmp(const char* path) {
     f.open(path, std::ios::in | std::ios::binary);
     
     if (!f.is_open()) {
-        throw std::runtime_error("READ ERROR: File could not be found");
+        throw std::runtime_error("ERROR: File could not be found");
     }
 
     const int fileHeaderSize = 14;
@@ -52,7 +78,7 @@ void Image::importBmp(const char* path) {
 
     colors.resize(width*height);
 
-    const int paddingSize = ((4 - (width * 3) % 4) % 4);
+    const int paddingSize = ((4 - (width * 3) & 3) & 3); // = ((4 - (width * 3) % 4) % 4);
     for (int row = 0; row < height; row++) {
         for (int col = 0; col < width; col++) {
             unsigned char color[3];
@@ -78,8 +104,7 @@ void Image::exportBmp(const char* path) {
     }
 
     unsigned char bmpPad[3] = {0, 0, 0};
-    const int paddingSize = ((4 - (width * 3) % 4) % 4);
-    // const int paddingSize = ((4 - (width * 3) & 3) & 3);
+    const int paddingSize = ((4 - (width * 3) & 3) & 3); // = ((4 - (width * 3) % 4) % 4);
     const int fileHeaderSize = 14;
     const int infoHeaderSize = 40;
     const int fileSize = fileHeaderSize + infoHeaderSize + width*height*3 + paddingSize*height;
