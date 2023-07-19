@@ -2,12 +2,15 @@
 
 #include <vector>
 
-struct Color {
-    float r, g, b; // in [0, 1] NOT [0, 255]
+class Color {
+    public:
+        float r, g, b; // in [0, 1] NOT [0, 255]
 
-    Color();
-    Color(float r, float g, float b);
-    ~Color();
+        Color();
+        Color(float r, float g, float b);
+        ~Color();
+        Color operator*(float k);
+        Color operator+(Color color);
 };
 
 class Image {

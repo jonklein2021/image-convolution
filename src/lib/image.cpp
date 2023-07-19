@@ -10,6 +10,14 @@ Color::Color(float r, float g, float b) :
 
 Color::~Color() {}
 
+Color Color::operator*(float k) {
+    return Color(r*k, g*k, b*k);
+}
+
+Color Color::operator+(Color color) {
+    return Color(r+color.r, g+color.g, b+color.b);
+}
+
 Image::Image(int w, int h) : 
     width(w), height(h), colors(std::vector<Color>(w*h)) {}
 
@@ -53,9 +61,9 @@ Color Image::getColor(int x, int y) {
 }
 
 void Image::setColor(const Color& color, int x, int y) {
-    colors[x*width+y].r = color.r;
-    colors[x*width+y].g = color.g;
-    colors[x*width+y].b = color.b;
+    colors[y*width+x].r = color.r;
+    colors[y*width+x].g = color.g;
+    colors[y*width+x].b = color.b;
 }
 
 void Image::importBmp(const char* path) {
