@@ -102,7 +102,7 @@ void Image::importBmp(const char* path) {
     }
     f.close();
 
-    std::cout << "File \"" << path << "\" read successfully" << std::endl;
+    // std::cout << "File \"" << path << "\" read successfully" << std::endl;
 
 }
 
@@ -212,5 +212,5 @@ void Image::exportBmp(const char* path) {
     }
     f.close();
     
-    std::cout << "Image created at \"" << path << "\"" << std::endl;
+    // std::cout << "Image created at \"" << path << "\"" << std::endl;
 }

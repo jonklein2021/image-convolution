@@ -1,0 +1,44 @@
+bmp-convolve
+
+DESCRIPTION
+    Convolves a bitmap image with some kernel and exports result to a new copy
+
+USAGE
+    ./bmp-convolve [KERNEL] [INPUT] [OUTPUT]
+
+FLAGS
+    -1, --box-blur
+        Use box blur kernel
+
+        | 1/9 1/9 1/9 |
+        | 1/9 1/9 1/9 |
+        | 1/9 1/9 1/9 |
+
+    -2, --g-blur-3x3
+        Use 3x3 gaussian blur kernel
+
+        | 1/16 2/16 1/16 |
+        | 2/16 4/16 2/16 |
+        | 1/16 2/16 1/16 |
+
+    -3, --g-blur-5x5
+        Use 5x5 gaussian blur kernel
+
+        | 1/256  4/256  6/256  4/256 1/256 |
+        | 4/256 16/256 24/256 16/256 4/256 |
+        | 6/256 24/256 36/256 24/256 6/256 |
+        | 4/256 16/256 24/256 16/256 4/256 |
+        | 1/256  4/256  6/256  4/256 1/256 |
+
+    -h, --help
+        Displays this help menu
+
+RETURN CODES
+    0   Returned if all runs successfully
+    1   Returned if there are any problems with producing output image
+    2   Returned if command is misused
+
+Author: Jon Klein
+Started from Aerideus on YouTube:
+https://www.youtube.com/watch?v=vqT5j38bWGg
+https://www.youtube.com/watch?v=NcEE5xmpgQ0&t=463s

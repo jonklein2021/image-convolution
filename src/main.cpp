@@ -8,72 +8,129 @@
  */
 
 #include <iostream>
+#include <fstream>
 #include <cmath>
-#include "image.hpp"
 #include <chrono>
+#include <cstring>
+#include <unordered_map>
+#include "image.hpp"
 
-// definition is at the end of this file
+#define K 3
+
+// definitions are at the end of this file
 Image convolve(Image& src, std::vector<float> kernel);
+void printHelp();
+
+const std::vector<float> copy = {
+    1.0, 1.0, 1.0,
+    1.0, 1.0, 1.0,
+    1.0, 1.0, 1.0
+};
 
 const std::vector<float> boxBlur = {
-    1.0/9.0, 1.0/9.0, 1.0/9.0, 
-    1.0/9.0, 1.0/9.0, 1.0/9.0, 
+    1.0/9.0, 1.0/9.0, 1.0/9.0,
+    1.0/9.0, 1.0/9.0, 1.0/9.0,
     1.0/9.0, 1.0/9.0, 1.0/9.0
 };
 
 const std::vector<float> gaussianBlur3x3 = {
-    1.0/16.0, 2.0/16.0, 1.0/16.0, 
-    2.0/16.0, 4.0/16.0, 2.0/16.0, 
+    1.0/16.0, 2.0/16.0, 1.0/16.0,
+    2.0/16.0, 4.0/16.0, 2.0/16.0,
     1.0/16.0, 2.0/16.0, 1.0/16.0
 };
 
 const std::vector<float> gaussianBlur5x5 = {
-    1.0/256.0,  4.0/256.0,  6.0/256.0,  4.0/256.0, 1.0/256.0, 
-    4.0/256.0, 16.0/256.0, 24.0/256.0, 16.0/256.0, 4.0/256.0, 
+    1.0/256.0,  4.0/256.0,  6.0/256.0,  4.0/256.0, 1.0/256.0,
+    4.0/256.0, 16.0/256.0, 24.0/256.0, 16.0/256.0, 4.0/256.0,
     6.0/256.0, 24.0/256.0, 36.0/256.0, 24.0/256.0, 6.0/256.0,
-    4.0/256.0, 16.0/256.0, 24.0/256.0, 16.0/256.0, 4.0/256.0, 
+    4.0/256.0, 16.0/256.0, 24.0/256.0, 16.0/256.0, 4.0/256.0,
     1.0/256.0,  4.0/256.0,  6.0/256.0,  4.0/256.0, 1.0/256.0
 };
 
-int main() {
-    char file[255];
-    puts("Convolutions for Image Processing");
-    puts("========================================");
-    puts("Enter path to bitmap image to convolve (Ex: samples/doggo.bmp)");
-    
-    std::cin >> file;
+enum Kernel {
+    BOX_BLUR,
+    GAUSSIAN_BLUR_3X3,
+    GAUSSIAN_BLUR_5X5
+};
 
-    // create image object from bmp file
-    Image original(file);
+std::vector<float> kernels[K] = {boxBlur, gaussianBlur3x3, gaussianBlur5x5};
+std::string kernelStrings[K] = {"Box Blur", "3x3 Gaussian Blur", "5x5 Gaussian Blur"};
 
-    puts("\nPlease enter the number of a kernel below:");
-    puts("1. Box Blur");
-    puts("2. Gaussian Blur (3x3)");
-    puts("3. Gaussian Blur (5x5)");
+std::unordered_map<std::string, Kernel> argMap = {
+        {"--box-blur", BOX_BLUR},
+        {"-1", BOX_BLUR},
+        {"--g-blur-3x3", GAUSSIAN_BLUR_3X3},
+        {"-2", GAUSSIAN_BLUR_3X3},
+        {"--g-blur-5x5", GAUSSIAN_BLUR_5X5},
+        {"-3", GAUSSIAN_BLUR_5X5}
+    };
 
-    char selection[256];
-    std::cin >> selection;
-    std::vector<float> kernel;
-    
-    if (atoi(selection) == 1) {
-        kernel = boxBlur;
-    } else if (atoi(selection) == 2) {
-        kernel = gaussianBlur3x3;
-    } else if (atoi(selection) == 3) {
-        kernel = gaussianBlur5x5;
-    } else {
-        puts("Invalid selection.");
-        return 1;
+int main(int argc, char** argv) {
+    // ensure correct number of arguments
+    if (argc != 2 && argc != 4) { // trips for "./bmp-convolve"
+        std::cerr << "Usage: ./convolve <option> <input> <output>\nTry './bmp-convolve --help' for more information" << std::endl;
+        return 2;
     }
 
-    auto t1 = std::chrono::high_resolution_clock::now(); // start time
-    Image blurred = convolve(original, kernel);
-    auto t2 = std::chrono::high_resolution_clock::now(); // end time
-    std::chrono::duration<double, std::milli> ms = t2 - t1; // convolution execution time
-    
-    std::cout << "Convolution successful (" << ms.count() << " ms)" << std::endl;
+    // argc = 2 only valid for -h and --help flags
+    if (argc == 2) {
+        if (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0) {
+            // print help menu
+            printHelp();
+            return 0;
+        } else {
+            std::cerr << "Usage: ./convolve <option> <input> <output>\nTry './bmp-convolve --help' for more information" << std::endl;
+            return 2;
+        }
+    }
 
-    blurred.exportBmp("blurred.bmp");
+    std::vector<float> kernel;
+    std::string kernelName;
+    char *inputPath = NULL, *outputPath;
+
+    // argc = 4 at this point
+    for (int i = 1; i < argc; i++) {
+        if (argv[i][0] == '-') {
+            // assume argument is double hyphen flag
+            auto iter = argMap.find(argv[i]);
+            if (iter == argMap.end()) {
+                // flag not found in mapping
+                std::cerr << "Unknown Flag: " << argv[i] << "\nTry './bmp-convolve --help' for more information" << std::endl;
+                return 2;
+            } else {
+                kernel = kernels[iter->second];
+                kernelName = kernelStrings[iter->second];
+            }
+        } else {
+            // not flag => this arg must be some path to image
+            if (inputPath == NULL) {
+                inputPath = argv[i];
+            } else {
+                outputPath = argv[i];
+            }
+        }
+    }
+
+    std::cout << inputPath << " " << outputPath << std::endl;
+
+    // create image object from file
+    Image original(inputPath);
+
+    // start time
+    auto t1 = std::chrono::high_resolution_clock::now();
+
+    // convolution time baby
+    Image blurred = convolve(original, kernel);
+
+    // end time
+    auto t2 = std::chrono::high_resolution_clock::now();
+    
+    // total execution time
+    std::chrono::duration<double, std::milli> ms = t2 - t1;
+    
+    std::cout << kernelName << " convolution successful (" << ms.count() << " ms)" << std::endl;
+
+    blurred.exportBmp(outputPath);
 
 }
 
@@ -83,7 +140,7 @@ Image convolve(Image& src, std::vector<float> kernel) {
 
     // ensure that kernel is an odd perfect square
     if (MM & 1 == 0 || MM != kernel.size()) {
-        throw std::runtime_error("ERROR: Kernel size must be an odd perfect square");
+        throw std::runtime_error("ERROR: Kernel size must be an odd perfect square (Ex. 3x3 or 5x5)");
     }
 
     // ensure that kernel is not too big
@@ -115,7 +172,52 @@ Image convolve(Image& src, std::vector<float> kernel) {
             dest.setColor(newColor, col, row);
         }
     }
-
     return dest;
+}
 
+void printHelp() {
+    std::cout << "bmp-convolve\n\n";
+
+    std::cout << "DESCRIPTION\n";
+    std::cout << "\tConvolves a bitmap image with some kernel and exports result to a new copy\n";
+
+    std::cout << "USAGE\n";
+    std::cout << "\t./bmp-convolve [KERNEL] [INPUT] [OUTPUT]\n";
+
+    std::cout << "FLAGS\n";
+    std::cout << "\t-1, --box-blur\n";
+    std::cout << "\t\tUse box blur kernel\n";
+
+    std::cout << "\t\t\t| 1/9 1/9 1/9 |\n";
+    std::cout << "\t\t\t| 1/9 1/9 1/9 |\n";
+    std::cout << "\t\t\t| 1/9 1/9 1/9 |\n";
+
+    std::cout <<  "\t-2, --g-blur-3x3\n";
+    std::cout <<  "\t\tUse 3x3 gaussian blur kernel\n";
+
+    std::cout <<  "\t\t\t| 1/16 2/16 1/16 |\n";
+    std::cout <<  "\t\t\t| 2/16 4/16 2/16 |\n";
+    std::cout <<  "\t\t\t| 1/16 2/16 1/16 |\n";
+
+    std::cout <<  "\t-3, --g-blur-5x5\n";
+    std::cout <<  "\t\tUse 5x5 gaussian blur kernel\n";
+
+    std::cout <<  "\t\t\t| 1/256  4/256  6/256  4/256 1/256 |\n";
+    std::cout <<  "\t\t\t| 4/256 16/256 24/256 16/256 4/256 |\n";
+    std::cout <<  "\t\t\t| 6/256 24/256 36/256 24/256 6/256 |\n";
+    std::cout <<  "\t\t\t| 4/256 16/256 24/256 16/256 4/256 |\n";
+    std::cout <<  "\t\t\t| 1/256  4/256  6/256  4/256 1/256 |\n";
+    
+    std::cout << "\t-h, --help\n";
+    std::cout << "\t\tDisplays this help menu\n";
+
+    std::cout << "RETURN CODES\n";
+    std::cout << "\t0   Returned if all runs successfully\n";
+    std::cout << "\t1   Returned if there are any problems with producing output image\n";
+    std::cout << "\t2   Returned if command is misused\n";
+
+    std::cout << "Author: Jon Klein\n";
+    std::cout << "Started from tutorials by Aerideus on YouTube:\n";
+    std::cout << "https://www.youtube.com/watch?v=vqT5j38bWGg\n";
+    std::cout << "https://www.youtube.com/watch?v=NcEE5xmpgQ0&t=463s" << std::endl;
 }
