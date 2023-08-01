@@ -1,10 +1,14 @@
 # image-manipulation
 C++ image processing using convolution matrices
 
+Started from Aerideus' YouTube tutorials:
+https://www.youtube.com/watch?v=vqT5j38bWGg
+https://www.youtube.com/watch?v=NcEE5xmpgQ0&t=463s
+
 ## Build & Run Instructions
 ```
 make
-./build/bin/main
+./bmp-convolve [KERNEL] [INPUT] [OUTPUT]
 ```
 
 ## TODOs
